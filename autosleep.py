@@ -11,11 +11,15 @@ sessions = set()
 while True:
     line = f.readline()
     if line == '':
-        if len(sessions) == 0:
-            syslog.syslog("No more ssh sessions, going to sleep");
-            os.system("/home/taras/work/sleepyscripts/suspend.sh")
-        # we've reached end of file, inotify avoids polling for growth
-        for e in inotifyx.get_events(ifd):
+        # we've reached end of log, inotify avoids polling for growth
+        # suspend if after 60seconds after activity in auth log stopped, there are still 0 ssh sessions
+        ls = []
+        while len(ls) == 0:
+            ls = inotifyx.get_events(ifd, 60)
+            if len(ls) + len(sessions) == 0:
+                syslog.syslog("No more ssh sessions, going to sleep");
+                os.system("/home/taras/work/sleepyscripts/suspend.sh")
+        for e in ls:
             print e.get_mask_description()
         continue
     m = re.search('sshd\[([0-9]+)\]:.*session (opened|closed)', line)
@@ -25,4 +29,4 @@ while True:
             sessions.add(pid)
         else:
             sessions.remove(pid)
-    print [pos, sessions,line.strip()]    
+    print [sessions,line.strip()]    
