@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import inotifyx, re, syslog, os
 """
-TODO: Deal with log rotation, 9-5 no sleep schedule, xbmc/vlc no sleep
+TODO: Deal with log rotation, 9-5 no sleep schedule, xbmc/vlc(via psutil?) no sleep
 """
 LOG =  "/var/log/auth.log"
 ifd = inotifyx.init()
