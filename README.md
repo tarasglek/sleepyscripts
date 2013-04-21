@@ -1,21 +1,14 @@
-The router steals server ip while server sleeps, then any connections to the IP are logged which triggers an awk script
+# Automatically Sleeping
 
-In the tomate firmware, copy the awk script to /jffs partion, then in the firewall script(or anywhere else in startup path) add
+To put the server to sleep run `autosleep.py` as root. It will monitor auth log for ssh activity and suspend a minute after last auth log activity
 
-```
-/usr/bin/tail -f /var/log/messages |/jffs/logmon.awk &
-```
+# Wake up on directed TCP activity
+Run `arpwake.mips br0 192.168.1.149 4C:72:B9:42:EA:97` on the router. arpwake waits for arp lookups of 192.168.1.149 and sends a WOL packet to 4C:72:B9:42:EA:97
 
+## Future improvements
+* Allow to specify a list of comma-separated IPs. This is useful for hosts with virtual machines where there may be many possible ips.
+* Run a command on arp. This would be useful to start virtual machines ondemand
+* Some clients(eg android) have a short ARP timeout. arpwake should spoof an arp reply to keep the client from timing out ~2-3 seconds in. Once TCP kicks in, the timeouts are huge. ATM my server takes ~7-10seconds to wake up, that's too long for android.
 
-On the server the sleep script should execute:
-```
-ping -c 1 -w 1 192.168.1.254
-```
-to notify that the server is about to go to sleep.
-
-Then after wake up the server should do
-```
-arping -U 192.168.1.149 -w 1
-arping -A 192.168.1.149 -w 1
-```
-to flush the fake ip out of arp tables on the LAN
+# Wake up via ssh for outside connections
+An easier way to wake up for outside ssh connections is to use ssh ProxyCommand, where the first part of the command sends an etherwake packet. This isn't as general as above(obviously) as it's done on the clientside.
